@@ -71,20 +71,37 @@ export class IncidentsService {
         if (data) {
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const parsed = typeof data === 'string' ? JSON.parse(data) : data;
-          return parsed as Incident[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed as Incident[];
+          }
         }
       } catch (error) {
         this.logger.error('Error reading from Redis', error);
       }
     }
 
-    // Fallback
-    return [
+    // Fallback: Leer de memoria local
+    let memoryIncidents = [
       ...this.senapredService.getIncidents(),
       ...this.bomberosService.getIncidents(),
       ...this.secService.getIncidents(),
       ...this.conafService.getIncidents(),
       ...this.meteoService.getIncidents(),
     ];
+
+    // Si la memoria está vacía (arranque en frío sin Redis), forzamos la sincronización
+    if (memoryIncidents.length === 0) {
+      this.logger.log('No cache found. Fetching incidents on the fly...');
+      await this.syncData();
+      memoryIncidents = [
+        ...this.senapredService.getIncidents(),
+        ...this.bomberosService.getIncidents(),
+        ...this.secService.getIncidents(),
+        ...this.conafService.getIncidents(),
+        ...this.meteoService.getIncidents(),
+      ];
+    }
+
+    return memoryIncidents;
   }
 }
