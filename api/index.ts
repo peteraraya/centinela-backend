@@ -1,8 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from '../src/app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import express from 'express';
+import helmet from 'helmet';
+import compression from 'compression';
+import hpp from 'hpp';
+import { Logger } from 'nestjs-pino';
 
 const server = express();
 
@@ -10,11 +15,46 @@ export const createNestServer = async (expressInstance: express.Express) => {
   const app = await NestFactory.create(
     AppModule,
     new ExpressAdapter(expressInstance),
+    { bufferLogs: true },
   );
 
-  // Habilitar CORS
+  app.useLogger(app.get(Logger));
+
+  // Seguridad: Añadir headers HTTP recomendados
+  app.use(helmet());
+
+  // Seguridad: Validar automáticamente los DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  // Seguridad: Prevenir ataques de contaminación de parámetros HTTP (HPP OWASP)
+  app.use(hpp());
+
+  // Optimización: Comprimir las respuestas con Gzip
+  app.use(compression());
+
+  // CORS Restrictivo
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',')
+    : ['https://red-centinela.vercel.app', 'http://localhost:5173'];
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
@@ -28,6 +68,7 @@ export const createNestServer = async (expressInstance: express.Express) => {
     )
     .setVersion('1.0')
     .addTag('incidents', 'Endpoints relacionados con incidentes y emergencias')
+    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'api-key')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
