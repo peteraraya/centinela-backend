@@ -24,14 +24,13 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # Nota: Normalmente Vercel despliega automáticamente si conectas el repositorio a Vercel.
-      # Si prefieres forzar el despliegue mediante GitHub Actions, puedes usar el CLI de Vercel.
-      # Para que esto funcione, necesitas agregar VERCEL_TOKEN, VERCEL_ORG_ID, y VERCEL_PROJECT_ID 
-      # en los "Secrets" de tu repositorio de GitHub.
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+      # Nota: Normalmente Vercel despliega automáticamente al hacer push a GitHub.
+      # El paso manual con GitHub Actions fallará si no configuras VERCEL_TOKEN en los Secrets.
+      # Queda comentado para permitir que el despliegue natural de Vercel actúe.
+      # - name: Deploy to Vercel
+      #   uses: amondnet/vercel-action@v20
+      #   with:
+      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
+      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+      #     vercel-args: '--prod'
