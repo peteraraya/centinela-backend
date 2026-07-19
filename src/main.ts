@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
@@ -12,13 +13,35 @@ async function bootstrap() {
   // Seguridad: Añadir headers HTTP recomendados
   app.use(helmet());
 
+  // Seguridad: Validar automáticamente los DTOs
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   // Optimización: Comprimir las respuestas con Gzip
   app.use(compression());
 
-  // Habilitar CORS para que el frontend (React) pueda consumir la API
-  // En producción, es recomendable cambiar el '*' por la URL específica del frontend (ej: 'http://localhost:5173')
+  // CORS Restrictivo
+  const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',')
+    : ['http://localhost:5173'];
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     preflightContinue: false,
     optionsSuccessStatus: 204,
@@ -32,6 +55,7 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addTag('incidents', 'Endpoints relacionados con incidentes y emergencias')
+    .addApiKey({ type: 'apiKey', name: 'x-api-key', in: 'header' }, 'api-key')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

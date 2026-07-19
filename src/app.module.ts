@@ -18,6 +18,9 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
       validationSchema: Joi.object({
         PORT: Joi.number().default(3000),
         FRONTEND_URL: Joi.string().default('*'),
+        API_KEY: Joi.string()
+          .required()
+          .description('API Key secreta para acceso'),
       }),
     }),
     LoggerModule.forRoot({

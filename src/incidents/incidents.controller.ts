@@ -1,14 +1,22 @@
-import { Controller, Get, UseInterceptors, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  UseInterceptors,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiProperty,
-  ApiQuery,
+  ApiSecurity,
 } from '@nestjs/swagger';
 import { IncidentsService } from './incidents.service';
 import { Incident } from './interfaces/incident.interface';
+import { GetIncidentsQueryDto } from './dto/get-incidents.dto';
+import { ApiKeyGuard } from '../common/guards/api-key.guard';
 
 class IncidentDetailsDto {
   @ApiProperty({
@@ -95,6 +103,8 @@ class IncidentResponseDto implements Incident {
 }
 
 @ApiTags('incidents')
+@ApiSecurity('api-key')
+@UseGuards(ApiKeyGuard)
 @Controller('api/v1/incidents')
 export class IncidentsController {
   constructor(private readonly incidentsService: IncidentsService) {}
@@ -105,34 +115,20 @@ export class IncidentsController {
   @ApiOperation({
     summary: 'Obtener todas las emergencias e incidentes activos',
   })
-  @ApiQuery({
-    name: 'type',
-    required: false,
-    description: 'Filtrar por tipo de incidente (ej: alert, fire)',
-  })
-  @ApiQuery({
-    name: 'severity',
-    required: false,
-    enum: ['low', 'medium', 'high', 'critical'],
-    description: 'Filtrar por nivel de severidad',
-  })
   @ApiResponse({
     status: 200,
     description:
       'Lista de incidentes activos agregada desde múltiples fuentes.',
     type: [IncidentResponseDto],
   })
-  getAllActiveIncidents(
-    @Query('type') type?: string,
-    @Query('severity') severity?: string,
-  ): Incident[] {
+  getAllActiveIncidents(@Query() query: GetIncidentsQueryDto): Incident[] {
     let incidents = this.incidentsService.getAggregatedIncidents();
 
-    if (type) {
-      incidents = incidents.filter((i) => i.type === type);
+    if (query.type) {
+      incidents = incidents.filter((i) => i.type === query.type);
     }
-    if (severity) {
-      incidents = incidents.filter((i) => i.severity === severity);
+    if (query.severity) {
+      incidents = incidents.filter((i) => i.severity === query.severity);
     }
 
     return incidents;
