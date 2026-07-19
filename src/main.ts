@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import compression from 'compression';
+import hpp from 'hpp';
 import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
@@ -21,6 +22,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Seguridad: Prevenir ataques de contaminación de parámetros HTTP (HPP OWASP)
+  app.use(hpp());
 
   // Optimización: Comprimir las respuestas con Gzip
   app.use(compression());
