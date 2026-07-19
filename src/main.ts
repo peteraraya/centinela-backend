@@ -28,7 +28,7 @@ async function bootstrap() {
   // CORS Restrictivo
   const allowedOrigins = process.env.FRONTEND_URL
     ? process.env.FRONTEND_URL.split(',')
-    : ['http://localhost:5173'];
+    : ['https://red-centinela.vercel.app', 'http://localhost:5173'];
 
   app.enableCors({
     origin: (origin, callback) => {

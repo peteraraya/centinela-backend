@@ -17,7 +17,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
       isGlobal: true,
       validationSchema: Joi.object({
         PORT: Joi.number().default(3000),
-        FRONTEND_URL: Joi.string().default('*'),
+        FRONTEND_URL: Joi.string().default('https://red-centinela.vercel.app'),
         API_KEY: Joi.string()
           .required()
           .description('API Key secreta para acceso'),
