@@ -121,8 +121,10 @@ export class IncidentsController {
       'Lista de incidentes activos agregada desde múltiples fuentes.',
     type: [IncidentResponseDto],
   })
-  getAllActiveIncidents(@Query() query: GetIncidentsQueryDto): Incident[] {
-    let incidents = this.incidentsService.getAggregatedIncidents();
+  async getAllActiveIncidents(
+    @Query() query: GetIncidentsQueryDto,
+  ): Promise<Incident[]> {
+    let incidents = await this.incidentsService.getAggregatedIncidents();
 
     if (query.type) {
       incidents = incidents.filter((i) => i.type === query.type);
@@ -132,5 +134,19 @@ export class IncidentsController {
     }
 
     return incidents;
+  }
+
+  @Get('sync')
+  @ApiOperation({
+    summary:
+      'Sincronizar emergencias con las APIs oficiales (Uso de Vercel Cron)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Sincronización exitosa',
+  })
+  async syncIncidents() {
+    await this.incidentsService.syncData();
+    return { success: true, message: 'Data synced successfully to Redis' };
   }
 }

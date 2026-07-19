@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import Parser from 'rss-parser';
 import { Incident } from '../incidents/interfaces/incident.interface';
 
@@ -9,7 +8,6 @@ export class SenapredService {
   private parser = new Parser();
   private incidents: Incident[] = [];
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
   async fetchAlertas() {
     this.logger.log('Fetching SENAPRED alerts...');
     try {

@@ -11,7 +11,6 @@ export class MeteoService {
 
   constructor(private readonly httpService: HttpService) {}
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
   async fetchAlertasMeteorologicas() {
     this.logger.log('Fetching Alertas Meteorológicas de DMC...');
     try {
