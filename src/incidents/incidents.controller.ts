@@ -103,8 +103,6 @@ class IncidentResponseDto implements Incident {
 }
 
 @ApiTags('incidents')
-@ApiSecurity('api-key')
-@UseGuards(ApiKeyGuard)
 @Controller('api/v1/incidents')
 export class IncidentsController {
   constructor(private readonly incidentsService: IncidentsService) {}
@@ -137,6 +135,8 @@ export class IncidentsController {
   }
 
   @Get('sync')
+  @ApiSecurity('api-key')
+  @UseGuards(ApiKeyGuard)
   @ApiOperation({
     summary:
       'Sincronizar emergencias con las APIs oficiales (Uso de Vercel Cron)',
