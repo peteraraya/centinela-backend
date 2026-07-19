@@ -1,9 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import helmet from 'helmet';
+import compression from 'compression';
+import { Logger } from 'nestjs-pino';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
+
+  // Seguridad: Añadir headers HTTP recomendados
+  app.use(helmet());
+
+  // Optimización: Comprimir las respuestas con Gzip
+  app.use(compression());
 
   // Habilitar CORS para que el frontend (React) pueda consumir la API
   // En producción, es recomendable cambiar el '*' por la URL específica del frontend (ej: 'http://localhost:5173')

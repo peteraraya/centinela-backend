@@ -1,9 +1,11 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseInterceptors, Query } from '@nestjs/common';
+import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiProperty,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { IncidentsService } from './incidents.service';
 import { Incident } from './interfaces/incident.interface';
@@ -98,8 +100,21 @@ export class IncidentsController {
   constructor(private readonly incidentsService: IncidentsService) {}
 
   @Get()
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(30000)
   @ApiOperation({
     summary: 'Obtener todas las emergencias e incidentes activos',
+  })
+  @ApiQuery({
+    name: 'type',
+    required: false,
+    description: 'Filtrar por tipo de incidente (ej: alert, fire)',
+  })
+  @ApiQuery({
+    name: 'severity',
+    required: false,
+    enum: ['low', 'medium', 'high', 'critical'],
+    description: 'Filtrar por nivel de severidad',
   })
   @ApiResponse({
     status: 200,
@@ -107,7 +122,19 @@ export class IncidentsController {
       'Lista de incidentes activos agregada desde múltiples fuentes.',
     type: [IncidentResponseDto],
   })
-  getAllActiveIncidents(): Incident[] {
-    return this.incidentsService.getAggregatedIncidents();
+  getAllActiveIncidents(
+    @Query('type') type?: string,
+    @Query('severity') severity?: string,
+  ): Incident[] {
+    let incidents = this.incidentsService.getAggregatedIncidents();
+
+    if (type) {
+      incidents = incidents.filter((i) => i.type === type);
+    }
+    if (severity) {
+      incidents = incidents.filter((i) => i.severity === severity);
+    }
+
+    return incidents;
   }
 }
